@@ -3,13 +3,12 @@
 namespace app\controllers;
 
 use Yii;
-use app\models\Recipes;
 use app\models\Score;
 use app\models\ScoreSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\filters\AccessControl;
-use yii\helpers\ArrayHelper;
+use yii\filters\VerbFilter;
+
 /**
  * ScoreController implements the CRUD actions for Score model.
  */
@@ -21,22 +20,13 @@ class ScoreController extends Controller
     public function behaviors()
     {
         return [
-        'access' => [
-            'class' => AccessControl::className(),
-            'rules' => [                
-                [
-                    'allow' => true,
-                    'actions' => ['index','create','view','update','createtolst'],
-                    'roles' => ['admin'],
-                ],
-                [
-                    'allow' => true,
-                    'actions' => ['index','create','view','createtolst'],
-                    'roles' => ['usuario'],
+            'verbs' => [
+                'class' => VerbFilter::className(),
+                'actions' => [
+                    'delete' => ['POST'],
                 ],
             ],
-        ],
-    ];
+        ];
     }
 
     /**
@@ -46,7 +36,7 @@ class ScoreController extends Controller
     public function actionIndex()
     {
         $searchModel = new ScoreSearch();
-        $dataProvider = $searchModel->searchX(Yii::$app->request->queryParams);
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
@@ -74,31 +64,12 @@ class ScoreController extends Controller
     public function actionCreate()
     {
         $model = new Score();
-        $recetas = Recipes::findX()->all();
-        $recetasLst = ArrayHelper::map($recetas, 'id', 'name');
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-        return $this->redirect(['index']);
+            return $this->redirect(['view', 'id' => $model->id]);
         } else {
             return $this->render('create', [
                 'model' => $model,
-                'recetasLst' => $recetasLst,
-            ]);
-        }
-    }
-    
-    public function actionCreatetolst($idr)
-    {
-        $model = new Score();
-        $rrecetav = Recipes::findOne($idr);
-        $recetav = $rrecetav -> id ;
-
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['index']);
-        } else {
-            return $this->render('createtolst', [
-                'model' => $model,
-                'recetav' => $recetav,
             ]);
         }
     }

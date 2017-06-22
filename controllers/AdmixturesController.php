@@ -5,11 +5,11 @@ namespace app\controllers;
 use Yii;
 use app\models\Admixtures;
 use app\models\AdmixturesSearch;
-use app\models\Recipes;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
+use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
-use yii\filters\AccessControl;
+
 /**
  * AdmixturesController implements the CRUD actions for Admixtures model.
  */
@@ -21,17 +21,13 @@ class AdmixturesController extends Controller
     public function behaviors()
     {
         return [
-        'access' => [
-            'class' => AccessControl::className(),
-            'rules' => [                
-                [
-                    'allow' => true,
-                    'actions' => ['index','create','view','update','admixturess'],
-                    'roles' => ['admin','usuario'],
+            'verbs' => [
+                'class' => VerbFilter::className(),
+                'actions' => [
+                    'delete' => ['POST'],
                 ],
             ],
-        ],
-    ];
+        ];
     }
 
     /**
@@ -46,22 +42,6 @@ class AdmixturesController extends Controller
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
-        ]);
-    }
-    
-    public function actionAdmixturess($idr)
-    {
-        $rrecetai = Recipes::findOne($idr);
-        $recetai = $rrecetai -> name ;
-        
-        $searchModel = new AdmixturesSearch();
-        //$dataProvider = $searchModel->searchX(Yii::$app->request->queryParams, $idr);
-        $dataProvider = $searchModel->searchADP(Yii::$app->request->queryParams, $idr);
-
-        return $this->render('admixturess', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-            'recetai' => $recetai,
         ]);
     }
 

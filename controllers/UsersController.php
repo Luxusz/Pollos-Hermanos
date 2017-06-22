@@ -7,10 +7,8 @@ use app\models\Users;
 use app\models\UsersSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\helpers\Url;
-use yii\filters\AccessControl;
-use yii\widgets\ActiveForm;
-use yii\web\Response;
+use yii\filters\VerbFilter;
+use yii\helpers\ArrayHelper;
 
 /**
  * UsersController implements the CRUD actions for Users model.
@@ -21,29 +19,16 @@ class UsersController extends Controller
      * @inheritdoc
      */
     public function behaviors()
-{
-    return [
-        'access' => [
-            'class' => AccessControl::className(),
-            'rules' => [                
-                [
-                    'allow' => true,
-                    'actions' => ['index','create','view','update','cocinerosmas','delete'],
-                    'roles' => ['admin'],                   
-                ],
-                [
-                    'allow' => true,
-                    'actions' => ['misd','cocinerosmas'],
-                    'roles' => ['admin','usuario'],
-                ],
-                [
-                    'allow' => false,
-                    'actions' => ['register'],
+    {
+        return [
+            'verbs' => [
+                'class' => VerbFilter::className(),
+                'actions' => [
+                    'delete' => ['POST'],
                 ],
             ],
-        ],
-    ];
-}
+        ];
+    }
 
     /**
      * Lists all Users models.
@@ -55,17 +40,6 @@ class UsersController extends Controller
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
-    }
-    
-    public function actionCocinerosmas()
-    {
-        $searchModel = new UsersSearch();
-        $dataProvider = $searchModel->searchX(Yii::$app->request->queryParams);
-
-        return $this->render('cocinerosmas', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
         ]);
@@ -88,17 +62,9 @@ class UsersController extends Controller
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
-    
-    
     public function actionCreate()
     {
         $model = new Users();
-        
-        if ($model->load(Yii::$app->request->post()) && Yii::$app->request->isAjax)
-        {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            return ActiveForm::validate($model);
-        }
         
 
         if ($model->load(Yii::$app->request->post())) {
@@ -108,18 +74,7 @@ class UsersController extends Controller
             //luego, se le dice a la clave del modelo que sea igual a la clave encriptada
             $model->password = $hash;
             //finalmente, se guarda en la bd y se redirige a la vista de detalles
-            if($model->validate()){
-                    $model->save();                    
-                    $auth = Yii::$app->authManager;
-                    $rolNuevoYii = $auth->getRole($model->role);
-                    $auth->assign($rolNuevoYii, $model->id);
-                }
-                else{
-                    print_r($model->errors);
-                    echo "<meta http-equiv='refresh' content='8; ".Url::toRoute("users/create")."'>";
-                }
-                
-            
+            $model->save();
             return $this->redirect(['view', 'id' => $model->id]);
         } else {
             //si no, la llamada es mediante get, por lo que debe renderizar la vista
@@ -137,51 +92,18 @@ class UsersController extends Controller
      * @param integer $id
      * @return mixed
      */
-     public function actionUpdate($id)
+    public function actionUpdate($id)
     {
         //en modificar se aplica el mismo principio de crear
         $model = $this->findModel($id);
-        $rolold = $model->role;
 
         if ($model->load(Yii::$app->request->post())) {
             $hash = Yii::$app->getSecurity()->generatePasswordHash($model->password);
             $model->password = $hash;
-            if($model->validate()){
-                $model->save();
-                $auth = Yii::$app->authManager;
-                $rolAntYii =$auth->getRole($rolold);
-                $auth->revoke($rolAntYii, $model->id);
-                $rolNuevoYii = $auth->getRole($model->role);
-                $auth->assign($rolNuevoYii, $model->id);
-            }
-            else{
-                print_r($model->getErrors());
-            }
-            return $this->redirect(['index']);
+            $model->save();
+            return $this->redirect(['view', 'id' => $model->id]);
         } else {
             return $this->render('update', [
-                'model' => $model,
-            ]);
-        }
-    }   
-    
-    public function actionMisd($id)
-    {
-        //en modificar se aplica el mismo principio de crear
-        $model = $this->findModel($id);
-        $rolold = $model->role;
-
-        if ($model->load(Yii::$app->request->post())) {
-            $model->password = Yii::$app->getSecurity()->generatePasswordHash($model->password);
-            $model->save();
-            $auth = Yii::$app->authManager;
-            $rolAntYii =$auth->getRole($rolold);
-            $auth->revoke($rolAntYii, $model->id);
-            $rolNuevoYii = $auth->getRole($model->role);
-            $auth->assign($rolNuevoYii, $model->id);
-            return $this->redirect(['/site/lobby']);
-        } else {
-            return $this->render('misd', [
                 'model' => $model,
             ]);
         }

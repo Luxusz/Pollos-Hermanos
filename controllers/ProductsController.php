@@ -7,9 +7,8 @@ use app\models\Products;
 use app\models\ProductsSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\filters\AccessControl;
-use yii\widgets\ActiveForm;
-use yii\web\Response;
+use yii\filters\VerbFilter;
+
 /**
  * ProductsController implements the CRUD actions for Products model.
  */
@@ -20,19 +19,14 @@ class ProductsController extends Controller
      */
     public function behaviors()
     {
-        
         return [
-        'access' => [
-            'class' => AccessControl::className(),
-            'rules' => [                
-                [
-                    'allow' => true,
-                    'actions' => ['index','create','view','update'],
-                    'roles' => ['admin'],
+            'verbs' => [
+                'class' => VerbFilter::className(),
+                'actions' => [
+                    'delete' => ['POST'],
                 ],
             ],
-        ],
-    ];
+        ];
     }
 
     /**
@@ -48,13 +42,6 @@ class ProductsController extends Controller
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
         ]);
-    }
-    
-    public function actionExiste(){
-        $request = Yii::$app->request;
-        $products_id = $request->post('products_id');
-        $producto = Products::findOne($products_id);
-        echo HTMLPurifier::process("si");
     }
 
     /**
@@ -77,13 +64,9 @@ class ProductsController extends Controller
     public function actionCreate()
     {
         $model = new Products();
-        if ($model->load(Yii::$app->request->post()) && Yii::$app->request->isAjax)
-        {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            return ActiveForm::validate($model);
-        }
+
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['index']);
+            return $this->redirect(['view', 'id' => $model->id]);
         } else {
             return $this->render('create', [
                 'model' => $model,
