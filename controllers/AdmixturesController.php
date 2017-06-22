@@ -2,7 +2,7 @@
 
 namespace app\controllers;
 /**
- * Prueba awdawda
+ * Prueba 02
  */
 use Yii;
 use app\models\Admixtures;
